@@ -24,7 +24,7 @@ function scheduleHtmlParser(jsonStr) {
 				return {
 					name: item.kcmc,
 					position,
-					teacher: item.rkjs,
+					teacher: item.rkjs.replace(/\[([^\]]*)\](.*)/, "$2[$1]"),
 					weeks,
 					day,
 					sections,
@@ -37,7 +37,10 @@ function scheduleHtmlParser(jsonStr) {
 	});
 
 	// console.log(courseInfos);
-	return courseInfos.filter(course => course != null)
+	return {
+		courseInfos: courseInfos.filter(course => course != null), // 原先的返回内容
+		semester: jsonData[0].xnxq, // 你自己定义的属性
+	}
 }
 
 // 将范围字符串（如 "2-5" 或 "2-9,12-16"）转换为数组

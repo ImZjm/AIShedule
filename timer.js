@@ -7,11 +7,10 @@ async function scheduleTimer({
 } = {}) {
 	// 支持异步操作 推荐await写法
 
-	//获取总周数
-	let totalWeek = 0;
-	const weekCountRes = await fetch("https://wids.jw.chaoxing.com/admin/getCurrentPkZc", {
+	//从校历获取总周数和开学时间
+	const calendarRes = await fetch(`https://wids.jw.chaoxing.com/admin/system/zy/xlgl/getData/${parserRes.semester}`, {
 		"headers": {
-			"accept": "*/*",
+			"accept": "application/json, text/javascript, */*; q=0.01",
 			"accept-language": "zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6",
 			"x-requested-with": "XMLHttpRequest"
 		},
@@ -22,32 +21,25 @@ async function scheduleTimer({
 		"mode": "cors",
 		"credentials": "include"
 	});
-	const weeks = await weekCountRes.json();
-	totalWeek = weeks.data.length;
-
-	//获取开学时间
-	let startSemester = "";
-	const semesterRes = await fetch("https://wids.jw.chaoxing.com/admin/getXqByZc", {
-		"headers": {
-			"accept": "application/json, text/javascript, */*; q=0.01",
-			"accept-language": "zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6",
-			"content-type": "application/x-www-form-urlencoded; charset=UTF-8",
-			"x-requested-with": "XMLHttpRequest"
-		},
-		"referrer": "https://wids.jw.chaoxing.com/admin",
-		"referrerPolicy": "strict-origin-when-cross-origin",
-		"body": "zc=1",
-		"method": "POST",
-		"mode": "cors",
-		"credentials": "include"
-	});
-	const semesterJson = await semesterRes.json();
-	// console.log(semesterJson);
-	const semesterNo1Day = semesterJson.data[0].date;
-	const currentYear = new Date().getFullYear();
-	const [month, day] = semesterNo1Day.split("-").map(Number);
+	//calendarJson校历周数组
+	const calendarJson = await calendarRes.json();
+	totalWeek = calendarJson[calendarJson.length - 1].zc;
+	//从第一周拿到第一天的时间
+	firstWeek = calendarJson[0];
+	const [currentYear, month] = firstWeek.ny.split("-").map(Number)
+	let day;
+	const weekKey = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"];
+	for (const key of weekKey){
+		if(firstWeek.hasOwnProperty(key)){
+			day = firstWeek[key];
+			break;
+		}
+	}
 	const currentDate = new Date(currentYear, month - 1, day);
 	startSemester = String(currentDate.getTime());
+	// console.log("开始日期测试");
+	// console.log(startSemester);
+	// console.log(`${currentYear}-${month}-${day}`);
 
 	//获取每节课的上下课时间
 	let sections = [];
